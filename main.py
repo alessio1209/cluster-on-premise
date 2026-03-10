@@ -1,7 +1,7 @@
 from fastapi import FastAPI #importiamo le librerie necessarie per creare il nostro server
 import socket #libreria che permette a python di comunicare con il sistema operativo e la rete (ci serve per scoprire il nome della macchina)
 
-app = FastAPI #creiamo l'oggetto app, che è il motore del nostro server
+app = FastAPI() #creiamo l'oggetto app, che è il motore del nostro server
 
 @app.get("/") #si chiama decoratore. Se qualcuno si collega all'indirizzo principale (la root, indicata con /) usando il metodo GET (quello standard dei broswer) esegui la funzione che è sotto
 def read_root (): #funzione python
