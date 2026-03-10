@@ -1,40 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sito-web-nginx
-  labels:
-    app: frontend
+  name: python-app-deployment
 
 spec:
   replicas: 2
   selector:
     matchLabels: 
-      app: frontend
+      app: python-fastapi
   template:
     metadata:
       labels:
-        app: frontend
+        app: python-fastapi
     spec:
       containers:
-      - name: motore-nginx
-        image: nginx:latest
+      - name: container-python
+        image: alessioerco12/k8s-python-app:latest
+        imagePullPolicy: Always
         ports: 
-        - containerPort: 80
+        - containerPort: 8000
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: servizio-nginx
+  name: servizio-python
 
 spec:
   type: NodePort
   selector:
-    app: frontend
+    app: python-fastapi
   ports:
     - port: 80
-      targetPort: 80
+      targetPort: 8000
       nodePort: 30085
 
 ---
@@ -42,7 +41,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-nginx
+  name: ingress-python
 
 spec:
   rules: #regole da seguire. Elenco
@@ -53,6 +52,6 @@ spec:
         pathType: Prefix #oppure qualsiasi altra pagina che inizia con / come /chi siamo, /contatti ecc...
         backend: #se le regole precedenti sono soddisfatte, devi consegnare il pacchetto al backend
           service: #consegnerà il pacchetto al service chiamato servizio-nginx che abbiamo configurato prima
-            name: servizio-nginx 
+            name: servizio-python 
             port:
               number: 80 #la porta del service
