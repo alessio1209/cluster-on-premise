@@ -1,0 +1,28 @@
+name: Build and Push Docker Image #titolo pipeline
+
+on: #trigger (grilletto), avvia questa pipeline ogni volta che viene effettuato un git push sul branch main oppure qualsiasi branch che inizia per feature/
+  push:
+    branches:
+      - main
+      - 'feature/**'
+
+jobs: #inizio lista dei lavori da fare
+  build-and-push:
+    runs-on: ubuntu-latest #stiamo dicendo a Microsoft (github) di prestarci un server gratuito con installato l'ultimo Ubuntu
+
+    steps: #compiti passo-passo che il server in affitto dovrà eseguire
+      - name: Checkout del codice
+        uses: actions/checkout@v4 #il server ubuntu scarica il codice da GitHub e lo mette sul suo disco fisso 
+
+      - name: Login su Docker Hub
+        uses: docker/login-action@v3 #il server usa l'azione ufficiale di Docker per fare il login
+        with: #il server estrae i secrets che abbiamo impostato su docker hub
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build e Push dell'immagine
+        uses: docker/build-push-action@v5 #accende il motore di compilazione di docker, costruisce il container con il comando docker build -t ... e effettua un docker push 
+        with: 
+          context: . #nel server ubuntu, nella cartella corrente in cui ti trovi, dove il server ubuntu con il passo actions/checkou@v4 ha scaricato l'intero repository dal cloud e lo ha salvato sul suo disco
+          push: true #costruisce l'immagine e la spedisce online
+          tags: alessioerco12/k8s-python-app:latest #appiccica all'immagine questo nome 
