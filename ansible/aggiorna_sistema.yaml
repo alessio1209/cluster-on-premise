@@ -1,0 +1,14 @@
+--- 
+- name: Manutenzione e Aggiornamento del Cluster
+  hosts: cluster
+  become: true
+
+  tasks:
+    - name: Aggiorna la lista dei pacchetti e installa gli upgrade
+      ansible.builtin.apt: #il modulo ufficiale di ansible per parlare con il gestore dei pacchetti apt di Debian
+        update_cache: true
+        upgrade: dist #equivale a apt upgrade (nello specifico dist-upgrade, che è la pratica consigliata per aggiornare tutte le dipendenze
+
+    - name: Rimuovi i vecchi pacchetti inutilizzati (autoremove)
+      ansible.builtin.apt:
+        autoremove: true

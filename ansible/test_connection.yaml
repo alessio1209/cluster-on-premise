@@ -1,0 +1,8 @@
+---
+- name: Test di connessione al Cluster
+  hosts: cluster #qui stiamo dicendo di eseguire gli ordini su tutti i server che fanno parte del gruppo cluster che abbiamo creato nell'inventory.ini
+  gather_facts: false
+
+  tasks:
+    - name: Ping alle macchine virtuali
+      ping: #ansible si connette in ssh, verifica i permessi e controlla se sulla macchina c'è Python installato per tradurlo. Se tutto va bene risponde pong
