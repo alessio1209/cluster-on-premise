@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service #centralino di rete. Di default è di tipo ClusterIP, ovvero è visibile solo dentro al cluster k3s, perfetto per la sicurezza
+metadata:
+  name: postgres #creando questo servizio, Kubernetes aggiungerà automaticamente la parola postgres nel suo server DNS interno. Quando l'app Python dovrà collegarsi al database, come "host" non scriverà più un IP, ma semplicemente la parola postgres
+  namespace: default
+
+spec:
+  selector:
+    app: postgres #diciamo al Service (centralino di rete) che tutte le chiamate che riceve deve girarle ai Pod che hanno l'etichetta app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432 #porta interna al cluster (pubblica) a cui risponde il centralino
+      targetPort: 5432 #porta reale del Pod (privata) su cui sta effettivamente girando il motore PostgreSQL

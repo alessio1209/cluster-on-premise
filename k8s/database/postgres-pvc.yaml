@@ -1,0 +1,13 @@
+apiVersion: v1 #api base di kubernetes
+kind: PersistentVolumeClaim #richesta di un volume persistente. è il modulo d'ordine per il disco
+metadata:
+  name: postgres-pvc #nome di questo disco. Lo useremo più avanti per dirgli dove agganciarsi
+  namespace: default #recinto logico in cui vivrà questo disco
+
+spec:
+  accessModes:
+    - ReadWriteOnce #regola di sicurezza, questo disco può essere letto e scritto (readwrite) da un solo Pod alla volta (once), per evitare corruzione dati
+  resources:
+    requests:
+      storage: 256Mi #spazio richiesto
+

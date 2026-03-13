@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment #diciamo a k3s di gestire questo container, assicurandosi che sia semprre acceso
+metadata:
+  name: postgres-deployment
+  namespace: default
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432 #la porta di rete standard su cui ascolta PostgreSQL
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: #la variabile non la scriviamo qui, perchè in questo modo lui la cercherà (Ref) dentro Secret (secretKey) chiamato postgres-secret
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts: #comunichiamo al container di prendere la cartella interna /var/lib/postgresql/data, dove salva i dati 
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes: #qui collega fisicamente la cartella /var/lib/postgresql/data al disco esterno chiamato postgres-pvc, quello creato nel file postgres-pvc.yaml 
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
