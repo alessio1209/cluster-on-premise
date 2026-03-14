@@ -15,10 +15,18 @@ spec:
     spec:
       containers:
       - name: container-python
-        image: alessioerco12/k8s-python-app:latest
+        image: alessioerco12/k8s-python-app:v2
         imagePullPolicy: Always
         ports: 
         - containerPort: 8000
+        env:
+          - name: DB_HOST
+            value: "postgres"
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_PASSWORD
 
 ---
 
