@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K3s Enterprise Dashboard</title>
+    <style>
+        /* --- STILI BASE E VARIABILI --- */
+        :root {
+            --primary: #2980b9;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --success: #27ae60;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background-color: #f8f9fa; 
+            display: flex;
+            color: #333;
+        }
+
+        /* --- LA SIDEBAR (Menu Laterale) --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--dark);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .sidebar-header { padding: 2rem 1.5rem; background: #1a252f; text-align: center;}
+        .sidebar-header h2 { margin: 0; font-size: 1.5rem; color: #fff; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-menu li { padding: 0; }
+        .sidebar-menu a {
+            display: block; padding: 1rem 1.5rem; color: #bdc3c7; text-decoration: none;
+            border-left: 4px solid transparent; transition: all 0.3s;
+        }
+        .sidebar-menu a:hover { background: #34495e; color: #fff; border-left: 4px solid var(--primary); }
+
+        /* --- CONTENUTO PRINCIPALE --- */
+        .main-content {
+            margin-left: 260px; /* Lascia spazio alla sidebar */
+            width: calc(100% - 260px);
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        /* --- LE SEZIONI E LA MAGIA DELLO SCORRIMENTO --- */
+        section {
+            min-height: 80vh; /* Ogni sezione prende quasi tutto lo schermo */
+            padding: 4rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: 1px solid #e0e0e0;
+            
+            /* L'effetto invisibile iniziale */
+            opacity: 0; 
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        /* Questa classe viene data da JS quando la sezione è inquadrata! */
+        section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- STILE COMPONENTI (Card, Form, Bottoni) --- */
+        h1 { font-size: 3rem; color: var(--dark); margin-bottom: 0.5rem;}
+        p.subtitle { font-size: 1.2rem; color: #7f8c8d; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); max-width: 600px; width: 100%; margin: 0 auto;}
+        
+        input { width: 100%; padding: 12px; margin: 10px 0 20px 0; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem;}
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 5px rgba(41, 128, 185, 0.3); }
+        button { background: var(--success); color: white; padding: 12px 24px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; width: 100%; transition: 0.3s;}
+        button:hover { background: #2196f3; transform: translateY(-2px); }
+        
+        /* Lista Utenti e Ricerca */
+        #cercaInput { margin-bottom: 20px; border: 2px solid var(--primary); }
+        ul { list-style: none; padding: 0; max-height: 500px; overflow-y: auto; }
+        li { background: var(--light); margin: 10px 0; padding: 15px; border-left: 5px solid var(--primary); border-radius: 4px; display: flex; justify-content: space-between; align-items: center;}
+        .user-id { background: var(--dark); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🚀 K3s Admin</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#home">🏠 Homepage</a></li>
+            <li><a href="#aggiungi">➕ Aggiungi Utente</a></li>
+            <li><a href="#lista">📋 Gestione Utenti</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        
+        <section id="home">
+            <h1>Benvenuto nel Sistema.</h1>
+            <p class="subtitle">Infrastruttura Kubernetes Full-Stack attiva e funzionante.</p>
+            <div style="display: flex; gap: 20px; margin-top: 2rem;">
+                <div class="card" style="text-align: center; margin:0;">
+                    <h3 style="margin-top: 0; color: var(--primary);">Database DB</h3>
+                    <p>PostgreSQL ✅</p>
+                </div>
+                <div class="card" style="text-align: center; margin:0;">
+                    <h3 style="margin-top: 0; color: var(--success);">API Backend</h3>
+                    <p>FastAPI Python ✅</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="aggiungi">
+            <div class="card">
+                <h2>Crea Nuovo Profilo</h2>
+                <p style="color: #666; margin-bottom: 20px;">Inserisci i dati del dipendente nel database centrale.</p>
+                <form id="formUtente">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" placeholder="Es. Mario Rossi" required>
+                    
+                    <label for="email">Indirizzo Email Aziendale</label>
+                    <input type="email" id="email" placeholder="mario.rossi@azienda.it" required>
+                    
+                    <button type="submit">Salva nel Database</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="lista">
+            <div class="card" style="max-width: 800px;">
+                <h2>Anagrafica Dipendenti</h2>
+                <input type="text" id="cercaInput" placeholder="🔍 Cerca per nome o email..." onkeyup="filtraUtenti()">
+                
+                <ul id="listaUtenti">
+                    <li>Caricamento in corso dal Cluster...</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // --- 1. IL MOTORE DELLE ANIMAZIONI (SCROLL FADE IN/OUT) ---
+        // Controlla costantemente dove sta guardando l'utente
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible'); // Appare quando ci arrivi
+                } else {
+                    entry.target.classList.remove('is-visible'); // Scompare quando te ne vai!
+                }
+            });
+        }, { threshold: 0.3 }); // Si attiva quando almeno il 30% della sezione è sullo schermo
+
+        // Dico all'observer di sorvegliare tutte le <section>
+        document.querySelectorAll('section').forEach((sezione) => {
+            observer.observe(sezione);
+        });
+
+
+        // --- 2. MOTORE DI RICERCA (Client-Side) ---
+        function filtraUtenti() {
+            const filtro = document.getElementById("cercaInput").value.toUpperCase();
+            const lista = document.getElementById("listaUtenti");
+            const elementi = lista.getElementsByTagName("li");
+
+            for (let i = 0; i < elementi.length; i++) {
+                let testo = elementi[i].textContent || elementi[i].innerText;
+                if (testo.toUpperCase().indexOf(filtro) > -1) {
+                    elementi[i].style.display = "";
+                } else {
+                    elementi[i].style.display = "none";
+                }
+            }
+        }
+
+        // --- 3. FUNZIONI DATABASE (Python) ---
+        async function caricaUtenti() {
+            const risposta = await fetch('/utenti/');
+            const dati = await risposta.json();
+            
+            const lista = document.getElementById('listaUtenti');
+            lista.innerHTML = ''; 
+            
+            dati.utenti_registrati.forEach(utente => {
+                lista.innerHTML += `
+                    <li>
+                        <div>
+                            <strong>${utente.nome}</strong><br>
+                            <small style="color:#666;">${utente.email}</small>
+                        </div>
+                        <span class="user-id">ID: ${utente.id}</span>
+                    </li>`;
+            });
+        }
+
+        document.getElementById('formUtente').addEventListener('submit', async (evento) => {
+            evento.preventDefault(); 
+            const nomeInput = document.getElementById('nome').value;
+            const emailInput = document.getElementById('email').value;
+
+            const risposta = await fetch('/utenti/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: nomeInput, email: emailInput })
+            });
+
+            if(risposta.ok) {
+                alert("Dipendente inserito con successo!");
+                document.getElementById('formUtente').reset(); 
+                caricaUtenti(); 
+            } else {
+                alert("Errore! Forse questa email è già registrata?");
+            }
+        });
+
+        caricaUtenti();
+    </script>
+</body>
+</html>
