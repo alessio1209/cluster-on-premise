@@ -1,1 +1,2 @@
 k8s/database/postgres-secret.yaml
+coredns-patch.yaml

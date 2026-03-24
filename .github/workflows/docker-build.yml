@@ -6,9 +6,15 @@ on: #trigger (grilletto), avvia questa pipeline ogni volta che viene effettuato 
       - main
       - 'feature/**'
 
+env:
+  IMAGE_NAME: alessioerco12/k8s-python-app
+
 jobs: #inizio lista dei lavori da fare
   build-and-push:
     runs-on: ubuntu-latest #stiamo dicendo a Microsoft (github) di prestarci un server gratuito con installato l'ultimo Ubuntu
+    #stiamo dando il permesso formale al robot di github di comportarsi come utente umano e di poter scrivere (fare push) dentro il repo. Senza questo, GitHub gli bloccherebbe l'accesso per sicurezza
+    permissions: 
+      contents: write
 
     steps: #compiti passo-passo che il server in affitto dovrà eseguire
       - name: Checkout del codice
@@ -20,9 +26,24 @@ jobs: #inizio lista dei lavori da fare
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Crea un Tag univoco
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV #il comando git rev-parse estrae i primi 7 caratteri dell'ID unico del ultimo commit (es. f4a8b2c). Poi salva in una variabile chiamata IMAGE.TAG. L'immagine non si chiamerà più banalmente "latest", ma avrà un nome unico e rintracciabile 
+
       - name: Build e Push dell'immagine
         uses: docker/build-push-action@v5 #accende il motore di compilazione di docker, costruisce il container con il comando docker build -t ... e effettua un docker push 
         with: 
           context: . #nel server ubuntu, nella cartella corrente in cui ti trovi, dove il server ubuntu con il passo actions/checkou@v4 ha scaricato l'intero repository dal cloud e lo ha salvato sul suo disco
           push: true #costruisce l'immagine e la spedisce online
-          tags: alessioerco12/k8s-python-app:latest #appiccica all'immagine questo nome 
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} #unisce le due variabile per dare il nome finale all'immagine (es. alessioerco12/k8s-python-app:f4a8b2c)
+
+      - name: Aggiorna il manifest kubernetes
+        run: |
+          #il comando linux sed (Stream Editor) apre il file python-deployment.yaml, cerca la riga che inizia per image:alessioerco12... e sostituisce tutto quello che c'è dopo i due puntini con il nuovo IMAGE_TAG
+          sed -i "s|image: ${{ env.IMAGE_NAME }}:.*|image: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}|g" python-deployment.yaml 
+      - name: Commit e Push su GitHub
+        run: |
+          git config user.name "GitHub Actions Bot" #il robot mette la mia firma per far capire chi ha eseguito la modifica
+          git config user.email "actions@github.com" 
+          git add python-deployment.yaml
+          git commit -m "ci: update image tag to ${{ env.IMAGE_TAG }}"
+          git push
