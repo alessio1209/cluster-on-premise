@@ -2,6 +2,14 @@
 pipeline { 
 	//diciamo a Jenkins di eseguire questo lavoro sul primo node/executor che ha disponibile
 	agent any
+
+	//creiamo una scatola globale per salvare l'ID della commmit 
+	environment {
+		//il comadno git rev-parse --short HEAD prende le prime 7 ettere della commit attuale
+		//.trim() toglie eventuali spazi vuoti finali
+		GIT_COMMIT_HASH = sh(script:'git rev-parse --short HEAD', returnStdout: true).trim()
+	}
+
 	//qui troviamo tutte le fasi (stages) della pipeline
 	stages {
 		//diamo un nome alla prima fase (quello che vedremo apparire allo schermo)
@@ -30,6 +38,30 @@ pipeline {
 				//stampa a schermo il contenuto dei file 
 				sh 'cat risultati_sicurezza.txt'
 			}
+		}
+
+		stage ('Costruzione immagine Docker') {
+			steps {
+				echo "Costruzione del container per la commit ${GIT_COMMIT_HASH}"
+				//usiamo l'ID della commit come tag
+				sh "docker build -t alessioerco12/k8s-python-app:${GIT_COMMIT_HASH} ."
+				//opzionale, ma comodo. Possiamo taggare la stessa immagine anche come "latest"
+				sh "docker tag alessioerco12/k8s-python-app:latest"
+			}
+		} 
+
+		stage ('Spedizione su docker hub') {
+			steps {
+				echo 'Apertura cassaforte e spedizione nel cloud'
+				//withCredentials= legge i dati. credentialsID:'dockerhub-creds'= va a leggere esattamente la credenziale che abbiamo salvato. passwordVariable: e usernameVariable: = jenkins estrae i valori reali e li inietta in due scatole virtuali temporanee chiamate 'DOCKER_PASSWORD' e 'DOCKER_USERNAME', queste esisteranno solo finchè siamo dentro questa fase, poi verranno distrutte
+				withCredentials([usernamePassword(credentialsID:'dockerhub-creds', passwordVariable:'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+					//la password viene iniettata direttamente, tramite |, in docker
+					sh 'echo "$DOCKER-PASSWORD | docker login -u "$DOCKER_USERNAME" --password-stdin'
+					//pusha le due etichette col nome corretto
+					sh "docker push alessioerco12/k8s-python-app:${GIT_COMMIT_HASH}"
+					sh "docker push alessioerco12/k8s-python-app:latest"
+				}
+			}		
 		}
 	}
 }
