@@ -18,11 +18,7 @@ pipeline {
 				echo 'Preparazione dello scanner di sicurezza Trivy'
 				sh '''
 					#si collega al server di Aqua Security e scarica il pacchetto compresso dell'antivirus Trivy
-					curl -L -o trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.49.1/trivy_0.49.1_Linux-64bit.tar.gz
-					#comando Linux per estrarre l'eseguibile, da qui uscirà un file eseguibile chiamato Trivy
-					tar zxvf trivy.tar.gz
-					#diamo il permesso di esecuzione al programma
-					chmod +x trivy 
+					curl -sfL  https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b .
 				'''
 			}
 		}
