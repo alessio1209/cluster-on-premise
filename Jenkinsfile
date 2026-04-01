@@ -1,22 +1,22 @@
 pipeline {
 	//1. spazio temporaneo dove chiediamo a kubernetes di prepararci i pod
 	agent {
-		kubernetes {
-			//di solito Jenkins gira in un solo container. Con questo blocco, chiediamo a kubernetes di costruire un Pod speciale a due stanze. Nella prima c'è Jenkins, nella seconda mettiamo un container chiamato kaniko (scaricato direttamente dai server di google:gcr.io)
-			//diciamo a kaniko di mettersi in modalità sleep 9999999 secondi, se non lo facessimo, il container si spegnerebbe subito dopo essersi acceso, invece noi vogliamo che resti vivo, in attesa che Jenkins lo svegli.
-			yaml '''
-			apiVersion: v1
-			kind: pod
-			spec:
-				containers:
-				- name: kaniko
-				  image: gcr.io/kaniko-project/executor:debug
-				  command:
-				  - sleep
-				  args:
-				  - 9999999
-			'''
-		}
+            kubernetes {
+                //di solito Jenkins gira in un solo container. Con questo blocco, chiediamo a kubernetes di costruire un Pod speciale a due stanze. Nella prima c'è Jenkins, nella seconda mettiamo un container chiamato kaniko (scaricato direttamente dai server di google:gcr.io)
+                //diciamo a kaniko di mettersi in modalità sleep 9999999 secondi, se non lo facessimo, il container si spegnerebbe subito dopo essersi acceso, invece noi vogliamo che resti vivo, in attesa che Jenkins lo svegli.
+                yaml '''
+                apiVersion: v1
+                kind: pod
+                spec:
+                  containers:
+                  - name: kaniko
+                    image: gcr.io/kaniko-project/executor:debug
+                    command:
+                    - sleep
+                    args:
+                    - 9999999
+                '''
+            }
 	}
 	
 	//2. variabili di sistema
