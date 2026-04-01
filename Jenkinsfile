@@ -42,11 +42,11 @@ pipeline {
 			}
 		}
 
-		stage ('Scansione sicureza') {
+		stage ('Scansione sicurezza') {
 			steps {
 				echo 'Avvio scansione vulnerabilità del codice'
 				sh './trivy fs --format table -o risultati_sicurezza.txt .'
-				sh 'cat risultati_sicureza.txt'
+				sh 'cat risultati_sicurezza.txt'
 			}
 		}
 
