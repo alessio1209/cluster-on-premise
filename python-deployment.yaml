@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: container-python
-        image: alessioerco12/k8s-python-app:4a25762
+        image: alessioerco12/k8s-python-app:0ca2d43
         imagePullPolicy: Always
         ports: 
         - containerPort: 8000
