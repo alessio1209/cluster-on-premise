@@ -70,5 +70,28 @@ pipeline {
 				}
 			}
 		}
+
+		stage ('Deploy aggiornamento GitOps') {
+			steps {
+				echo 'Modifica del file YAML e push su GitHub'
+				//usiamo la nuova chiave github
+				withCredentials([usernamePassword(credentialsId: 'github_creds', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+					//usiamo i tripli doppi apici (""") per far leggere a Groovy le variabili $GIT_COMMIT_HASH
+					sh """
+						#1. identifichiamo il bot
+						git config user.email "jenkins@automazione.com"
+						git config user.name "Jenkins GitOps Bot"
+						#2. sostituiamo il tag dell'immagine nl file python-deployment.yaml
+						sed -i "s|image: alessioerco12/k8s-python-app:.*|image: alessioerco12/k8s-python-app:${GIT_COMMIT_HASH}|g" python-deployment.yaml
+						#3. prepariamo il file modificato
+						git add python-deployment.yaml
+						#4. creiamo il commit con lo scudo anti-loop [skip ci]
+						git commit -m "ci: aggiornamento automatico tag a ${GIT_COMMIT_HASH} [skip ci]" || echo "nessuna modifica rilevata"
+						#5. spediamo la modifica su GitHub usando le credenziali in modo invisibile
+						git push https://${GIT_USER}:${GIT_PASS}@github.com/alessio1209/cluster-on-premise.git HEAD:main
+					"""
+				}
+			}
+		}
 	}
 }
