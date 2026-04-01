@@ -64,7 +64,7 @@ pipeline {
 							AUTH=$(echo -n "$USER:$PASS" | base64 | tr -d '\n')
 							echo "{\\"auths\\":{\\"https://index.docker.io/v1/\\":{\\"auth\\":\\"$AUTH\\"}}}" > /kaniko/.docker/config.json
 							#kaniko/executor= invochiamo il programma  --context 'pwd'= diciamo a kaniko dove si trovano i file el nostro codice, --destiantion= diciamo a kaniko dove spedire il pacchetto finito. Mettiamo due destinazioni, la prima usa la variabile ${GIT_COMMIT_HASH}, la seconda lo tagga come latest. Kaniko fa build e push insieme
-							/kaniko/executor --context 'pwd' --destiantion alessioerco12/k8s-python-app:$GIT_COMMIT_HASH --destination alessioerco12/k8s-python-app:latest
+							/kaniko/executor --context 'pwd' --destination alessioerco12/k8s-python-app:$GIT_COMMIT_HASH --destination alessioerco12/k8s-python-app:latest
 						'''
 					}
 				}
