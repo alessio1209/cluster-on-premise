@@ -6,7 +6,7 @@ pipeline {
                 //diciamo a kaniko di mettersi in modalità sleep 9999999 secondi, se non lo facessimo, il container si spegnerebbe subito dopo essersi acceso, invece noi vogliamo che resti vivo, in attesa che Jenkins lo svegli.
                 yaml '''
                 apiVersion: v1
-                kind: pod
+                kind: Pod
                 spec:
                   containers:
                   - name: kaniko
