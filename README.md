@@ -1,46 +1,45 @@
-# 🚀 Enterprise On-Premise K8s Cluster con GitOps & CI/CD
+# 🚀 K3s Enterprise GitOps Pipeline
 
-Questo repository contiene l'intera infrastruttura as Code (IaC), l'applicazione backend e le pipeline di automazione per un cluster Kubernetes on-premise multi-nodo, progettato con architettura GitOps.
+Questo repository contiene l'infrastruttura completa e il codice sorgente per un'applicazione Full-Stack distribuita su un cluster Kubernetes (K3s) on-premise, automatizzata tramite una pipeline CI/CD basata sul paradigma GitOps.
 
 ## 🏗️ Architettura del Sistema
 
-Il progetto simula un ambiente di Produzione reale, utilizzando un approccio distribuito e automatizzato al 100%. Il ciclo di vita del software è gestito interamente senza interventi manuali sui server, passando dal codice sorgente al deployment in pochi minuti.
+Il progetto simula un ambiente di produzione Enterprise, utilizzando strumenti Cloud-Native per garantire automazione, sicurezza e scalabilità.
 
-### 🛠️ Lo Stack Tecnologico utilizzato:
+* **Infrastruttura:** Cluster K3s on-premise (Debian).
+* **Continuous Integration (CI):** Jenkins (eseguito nativamente sul cluster tramite Jenkins Kubernetes Plugin e Pod effimeri).
+* **Image Building:** Kaniko (per build rootless e sicure all'interno del cluster).
+* **Security (DevSecOps):** Trivy (per la scansione delle vulnerabilità del file system).
+* **Container Registry:** Docker Hub.
+* **Continuous Deployment (CD):** ArgoCD (approccio GitOps puro).
+* **Ingress & Routing:** Traefik.
 
-* **Kubernetes (K3s):** L'orchestratore alla base di tutto. Configurato in modalità Multi-Nodo (1 Master / Control Plane + 1 Worker Node) per garantire alta affidabilità e distribuzione del carico.
-* **Traefik (Ingress Controller):** Agisce da "Portinaio" (Load Balancer e Reverse Proxy) del cluster, instradando il traffico esterno (`miosito.local`) verso i servizi corretti all'interno della rete virtuale di K3s.
-* **PostgreSQL:** Database relazionale distribuito sul nodo Worker.
-* **Python (FastAPI):** Applicazione backend containerizzata, che si connette al database per gestire ed esporre un'anagrafica dipendenti.
-* **Docker & DockerHub:** Strumenti di containerizzazione e Registry pubblico per l'archiviazione delle immagini dell'applicazione.
-* **GitHub Actions (Continuous Integration):** Pipeline automatizzata che compila il codice ad ogni push.
-* **ArgoCD (Continuous Deployment / GitOps):** Il "maggiordomo" all'interno del cluster che assicura che lo stato dell'infrastruttura reale sia sempre identico a quello dichiarato su GitHub.
+## 🔄 Il Flusso CI/CD (GitOps Workflow)
 
----
+1.  **Code Commit:** Lo sviluppatore effettua un push del codice sorgente (es. Python/FastAPI o HTML) sul ramo `main` di questo repository.
+2.  **Pipeline Trigger:** Jenkins avvia la pipeline definita nel `Jenkinsfile`.
+3.  **Security Scan:** Trivy analizza il repository alla ricerca di vulnerabilità.
+4.  **Build & Push:** Kaniko costruisce la nuova immagine container taggandola con il Git Commit Hash e la carica su Docker Hub.
+5.  **GitOps Update:** Jenkins modifica automaticamente il manifesto Kubernetes (`python-deployment.yaml`), aggiornando il tag dell'immagine con l'ultimo Hash, ed effettua un push automatico sul repository tramite un Service Account / PAT.
+6.  **Automated Deployment:** ArgoCD rileva la discrepanza tra lo stato desiderato (su GitHub) e lo stato attuale (sul cluster). Esegue automaticamente la sincronizzazione (Sync) avviando i nuovi Pod ed effettuando un rollout senza interruzioni.
 
-## 🔄 Il Ciclo CI/CD (The GitOps Loop)
+## 📂 Struttura del Repository
 
-Il cuore di questo progetto è l'automazione totale del rilascio. Ecco cosa succede "sotto il cofano" quando uno sviluppatore modifica il codice HTML o Python:
+* `main.py` / `index.html`: Codice sorgente dell'applicazione e frontend.
+* `Dockerfile`: Istruzioni per la containerizzazione dell'applicazione.
+* `Jenkinsfile`: Definizione dichiarativa della pipeline di Continuous Integration.
+* `python-deployment.yaml`: Manifesto Kubernetes per l'applicazione (Deployment, Service, Ingress), costantemente monitorato da ArgoCD.
+* `ansible/`: Script e playbook per la configurazione dei nodi del cluster.
+* `k8s/database/`: Manifesti per il deployment del database PostgreSQL.
 
-1. **Push su GitHub:** Lo sviluppatore invia il nuovo codice sul ramo `main` o `feature/*`.
-2. **Trigger della CI (GitHub Actions):** * Il robot di GitHub fa il checkout del codice.
-   * Genera un tag univoco basato sull'hash del commit (`git rev-parse --short HEAD`).
-   * Compila la nuova immagine Docker e fa il push su DockerHub.
-   * **La Magia:** Il robot apre il file `python-deployment.yaml`, aggiorna il tag dell'immagine alla nuova versione e fa un *commit automatico* sul repository.
-3. **Trigger della CD (ArgoCD):**
-   * ArgoCD (che "osserva" il repository H24) si accorge del nuovo commit fatto dal robot.
-   * Rileva che lo stato desiderato (nuovo tag YAML) diverge dallo stato attuale (vecchio tag nel cluster).
-   * Avvia in automatico un *Rolling Update*: crea i nuovi Pod Python, aspetta che siano sani e distrugge quelli vecchi senza causare disservizi (Zero Downtime).
+## 🚀 Come testare il flusso
 
----
-
-## 🛑 Troubleshooting & Lesson Learned (Vita da DevOps)
-
-Costruire questo cluster on-premise ha richiesto vere abilità di System Administration e Network Troubleshooting. Tra le sfide risolte:
-
-* **Custom DNS Patching:** K3s sovrascriveva il file resolv.conf della macchina host. Abbiamo creato un file `coredns-patch.yaml` per forzare i DNS di Google (`8.8.8.8`) nel ConfigMap di `kube-system`, permettendo ad ArgoCD di risolvere domini esterni (come github.com).
-* **Split-Brain & Network Partition (Flannel / iptables):** Il master e il worker perdevano la connessione interna (generando `Gateway Timeout` su Traefik). Il problema è stato debuggato analizzando gli *Endpoints* di Kubernetes ed eseguendo dei `ping` eseguiti direttamente dall'interno dei container (`kubectl exec`). È stato risolto effettuando il flush delle vecchie regole firewall di iptables e riavviando l'agent K3s e il networking di Debian per ricostruire il tunnel Flannel.
-* **Gestione dello Stato "Unknown" in ArgoCD:** Compresa la differenza tra *Health Status* (salute fisica dei Pod) e *Sync Status* (allineamento con il repository Git remoto).
+Per innescare un nuovo rilascio automatico:
+1. Modificare l'applicazione (es. aggiornare un titolo in `index.html`).
+2. Eseguire il push su GitHub.
+3. Avviare la build su Jenkins.
+4. Osservare ArgoCD sincronizzare il cluster e applicare la nuova versione in tempo reale.
 
 ---
+*Progetto realizzato per dimostrare competenze avanzate in ambito Cloud Engineering, Kubernetes e automazione CI/CD.*
 
