@@ -75,7 +75,7 @@ pipeline {
 			steps {
 				echo 'Modifica del file YAML e push su GitHub'
 				//usiamo la nuova chiave github
-				withCredentials([usernamePassword(credentialsId: 'github_creds', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+				withCredentials([usernamePassword(credentialsId: 'github-creds', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
 					//usiamo i tripli doppi apici (""") per far leggere a Groovy le variabili $GIT_COMMIT_HASH
 					sh """
 						#1. identifichiamo il bot
