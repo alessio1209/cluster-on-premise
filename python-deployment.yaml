@@ -13,6 +13,8 @@ spec:
       labels:
         app: python-fastapi
     spec:
+      nodeSelector:
+        kubernetes.io/hostname:debian2
       containers:
       - name: container-python
         image: alessioerco12/k8s-python-app:f3f162e
