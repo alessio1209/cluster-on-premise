@@ -17,7 +17,7 @@ spec:
         kubernetes.io/hostname:debian2
       containers:
       - name: container-python
-        image: alessioerco12/k8s-python-app:3e98f0e
+        image: alessioerco12/k8s-python-app:ce068fb
         imagePullPolicy: Always
         ports: 
         - containerPort: 8000
